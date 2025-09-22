@@ -24,15 +24,15 @@ def main():
     parser.add_argument(
         "--indir",
         help="path input directory",
-        default="/eos/experiment/fcc/ee/generation/DelphesEvents/winter2023_training/IDEA/",
+        default="/eos/experiment/fcc/hh/generation/DelphesEvents/fcc_v07/II/",
     )
     parser.add_argument(
         "--outdir",
         help="path output directory",
-        default="/eos/experiment/fcc/ee/jet_flavour_tagging/winter2023/samples_gen_v1",
+        default=os.path.join(os.getcwd(), "output"),
     )
 
-    parser.add_argument("--sample", help="sample name", default="wzp6_ee_nunuH_HXX_ecm240")
+    parser.add_argument("--sample", help="sample name", default="mgp8_pp_tt_HT_2000_100000_5f_84TeV")
     parser.add_argument("--ncpus", help="number of cpus", type=int, default=64)
     parser.add_argument("--opt", help="option 1: run stage 1, 2: run stage 2, 3: all 4: clean", default="3")
 
@@ -53,7 +53,7 @@ def main():
     process = get_process_from_sample(sample)
     if process not in flavor_to_process:
         raise ValueError(f"Process {process} not recognized in flavor_to_process mapping.")
-    proc_name = flavor_to_process[process]
+    f = flavor_to_process[process]
 
     outtmpdir = os.path.join(os.getcwd(), "tmp")    
     #outtmpdir = "/tmp/selvaggi/data/stage_all"
