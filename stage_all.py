@@ -88,18 +88,18 @@ def main():
         nevents_per_thread = max(1, int(nevents / ncpus))
 
         stage2_files = {}
-        stage2_final_file = f"{outtmpdir}/stage2_H{f}.root"
-        stage2_wild_files = f"{outtmpdir}/stage2_H{f}_*.root"
+        stage2_final_file = f"{outtmpdir}/stage2_{f}.root"
+        stage2_wild_files = f"{outtmpdir}/stage2_{f}_*.root"
         hadd_cmd = f"hadd -f {stage2_final_file} {stage2_wild_files}"
 
         commands_stage2 = []
         for i in range(ncpus):
-            stage2_files[i] = f"{outtmpdir}/stage2_H{f}_{i}.root"
+            stage2_files[i] = f"{outtmpdir}/stage2_{f}_{i}.root"
             nstart = i * nevents_per_thread
             nend = nstart + nevents_per_thread
 
             cmd_stage2 = (
-                f"python examples/FCCee/weaver/stage2.py "
+                f"python stage2.py "
                 f"{stage1_file} {stage2_files[i]} {nstart} {nend}"
             )
             commands_stage2.append(cmd_stage2)
