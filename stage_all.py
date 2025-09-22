@@ -63,118 +63,73 @@ def main():
 
     ## fill name of stage1 files
     stage1_files = dict()
-    for f in flavors:
-        stage1_files[f] = "{}/stage1_{}.root".format(outtmpdir, f)
-
+    #for f in flavors:
+        #stage1_files[f] = "{}/stage1_{}.root".format(outtmpdir, f)
+    stage1_file = f"{outtmpdir}/stage1_{f}.root"
     edm_files = ""
 
-    for f in flavors:
-        ### run stage 1
-        if opt == "1" or opt == "3":
+    ### run stage 1
+    if opt in ["1", "3"]:
+        sample_f = sample.replace("XX", f)   # (keep this if your sample has XX placeholder)
+        edm_files = f"{indir}/{sample_f}/*.root"
+        cmd_stage1 = (
+            f"fccanalysis run examples/FCCee/weaver/stage1_gen.py "
+            f"--output {stage1_file} --files-list {edm_files} --ncpus {ncpus}"
+        )
+        print("\nRunning stage 1:\n", cmd_stage1, "\n")
+        os.system(cmd_stage1)
 
-            sample_f = sample.replace("XX", f)
-            edm_files = "{}/{}/*.root".format(indir, sample_f)
-            cmd_stage1 = (
-                "fccanalysis run examples/FCCee/weaver/stage1_gen.py --output {} --files-list {} --ncpus {}".format(
-                    stage1_files[f], edm_files, ncpus
-                )
+    ### run stage 2
+    if opt in ["2", "3"]:
+        nevents = count_events(stage1_file)
+        nevents_per_thread = max(1, int(nevents / ncpus))
+
+        stage2_files = {}
+        stage2_final_file = f"{outtmpdir}/stage2_H{f}.root"
+        stage2_wild_files = f"{outtmpdir}/stage2_H{f}_*.root"
+        hadd_cmd = f"hadd -f {stage2_final_file} {stage2_wild_files}"
+
+        commands_stage2 = []
+        for i in range(ncpus):
+            stage2_files[i] = f"{outtmpdir}/stage2_H{f}_{i}.root"
+            nstart = i * nevents_per_thread
+            nend = nstart + nevents_per_thread
+
+            cmd_stage2 = (
+                f"python examples/FCCee/weaver/stage2.py "
+                f"{stage1_file} {stage2_files[i]} {nstart} {nend}"
             )
-            print("running stage 1: ")
-            print("")
-            print("{}".format(cmd_stage1))
-            print("")
-            os.system(cmd_stage1)
+            commands_stage2.append(cmd_stage2)
 
-        ### run stage 2
-        if opt == "2" or opt == "3":
+        # parallel execution
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=ncpus)
+        future_to_command = {executor.submit(run_command, cmd): cmd for cmd in commands_stage2}
+        concurrent.futures.wait(future_to_command)
 
-            nevents = count_events(stage1_files[f])
-            nevents_per_thread = int(nevents / ncpus)
-
-            commands_stage2 = []
-            stage2_files = dict()
-
-            stage2_final_file = "{}/stage2_H{}.root".format(outtmpdir, f)
-            stage2_wild_files = "{}/stage2_H{}_*.root".format(outtmpdir, f)
-            hadd_cmd = "hadd -f {} {}".format(stage2_final_file, stage2_wild_files)
-
-            for i in range(ncpus):
-
-                stage2_files[i] = "{}/stage2_H{}_{}.root".format(outtmpdir, f, i)
-                nstart = i * nevents_per_thread
-                nend = nstart + nevents_per_thread
-
-                cmd_stage2 = "python examples/FCCee/weaver/stage2.py {} {} {} {}".format(
-                    stage1_files[f], stage2_files[i], nstart, nend
-                )
-
-                commands_stage2.append(cmd_stage2)
-
-            # Create a thread pool executor with 4 threads
-
-            executor = concurrent.futures.ThreadPoolExecutor(max_workers=ncpus)
-
-            # Submit each command to the executor
-            future_to_command = {executor.submit(run_command, command): command for command in commands_stage2}
-
-            # Wait for all threads to finish
-            concurrent.futures.wait(future_to_command)
-
-            # Run the final command
-            print("")
-            print("now collect and hadd stage 2 files into: {}".format(stage2_final_file))
-            print(hadd_cmd)
-            os.system(hadd_cmd)
-            print("")
-            print("copy file to final destination...")
-            os.system("cp {} {}".format(stage2_final_file, outdir))
-            print("file {} copied".format(outdir))
-            print("cleaning up tmp files...".format(outdir))
-            os.system("rm -rf {} {} {}".format(stage2_final_file, stage1_files[f], stage2_wild_files))
-            print("done.")
+        # merge stage2 outputs
+        print(f"\nCollecting stage 2 files into: {stage2_final_file}")
+        os.system(hadd_cmd)
+        print("Copying final file to output dir...")
+        os.system(f"cp {stage2_final_file} {outdir}")
+        print("Cleaning tmp files...")
+        os.system(f"rm -rf {stage2_final_file} {stage1_file} {stage2_wild_files}")
+        print("Done.")
 
 
 # ________________________________________________________________________________
-
-
 def run_command(command):
-    # Replace this with code to run the command
-    print("running command: {}".format(command))
+    print(f"running command: {command}")
     os.system(command)
 
 
 # ________________________________________________________________________________
 def count_events(file, tree_name="events"):
     import ROOT
-
-    # Open the ROOT file
     root_file = ROOT.TFile.Open(file)
-
-    # Get the tree from the file
     tree = root_file.Get(tree_name)
-
-    # Get the number of events in the tree
-    num_events = tree.GetEntries()
-
-    return num_events
+    return tree.GetEntries()
 
 
 # ________________________________________________________________________________
-def count_events(file, tree_name="events"):
-    import ROOT
-
-    # Open the ROOT file
-    root_file = ROOT.TFile.Open(file)
-
-    # Get the tree from the file
-    tree = root_file.Get(tree_name)
-
-    # Get the number of events in the tree
-    num_events = tree.GetEntries()
-
-    return num_events
-
-
-# _______________________________________________________________________________________
 if __name__ == "__main__":
     main()
