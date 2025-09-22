@@ -2,7 +2,7 @@ import sys
 from array import array
 from ROOT import TFile, TTree
 from config import variables_pfcand, variables_jet, flavors
-
+from config import njets as NJ
 debug = False
 
 if len(sys.argv) < 2:
@@ -101,7 +101,9 @@ for entry in range(n_start, n_final):
     ev.GetEntry(entry)
 
     njets = len(getattr(ev, branches_jet[0]))
-
+    ## 17 Jun code
+    if njets > NJ:
+        njets = NJ #end of code
     ## loop over jets
     for j in range(njets):
 
