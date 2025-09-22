@@ -72,10 +72,13 @@ def main():
     if opt in ["1", "3"]:
         sample_f = sample.replace("XX", f)   # (keep this if your sample has XX placeholder)
         edm_files = f"{indir}/{sample_f}/*.root"
-        cmd_stage1 = (
-            f"fccanalysis run examples/FCCee/weaver/stage1_gen.py "
-            f"--output {stage1_file} --files-list {edm_files} --ncpus {ncpus}"
-        )
+        cmd_stage1 = [
+    "fccanalysis", "run", "stage1.py",
+    "--output", stage1_file,
+    "--files-list", edm_files,
+    "--ncpus", str(ncpus),
+        ]
+
         print("\nRunning stage 1:\n", cmd_stage1, "\n")
         os.system(cmd_stage1)
 
