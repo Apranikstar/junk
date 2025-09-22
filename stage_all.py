@@ -70,17 +70,18 @@ def main():
 
     ### run stage 1
     if opt in ["1", "3"]:
-        sample_f = sample.replace("XX", f)   # (keep this if your sample has XX placeholder)
+        sample_f = sample.replace("XX", f)  # keep this if sample has XX placeholder
         edm_files = f"{indir}/{sample_f}/*.root"
+
         cmd_stage1 = [
-    "fccanalysis", "run", "stage1.py",
-    "--output", stage1_file,
-    "--files-list", edm_files,
-    "--ncpus", str(ncpus),
+            "fccanalysis", "run", "stage1.py",
+            "--output", stage1_file,
+            "--files-list", edm_files,
+            "--ncpus", str(ncpus),
         ]
 
-        print("\nRunning stage 1:\n", cmd_stage1, "\n")
-        os.system(cmd_stage1)
+        print("\nRunning stage 1:\n", " ".join(cmd_stage1), "\n")
+        subprocess.run(cmd_stage1, check=True)
 
     ### run stage 2
     if opt in ["2", "3"]:
