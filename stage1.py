@@ -1,4 +1,4 @@
-from examples.FCCee.weaver.config import (
+from config import (
     variables_pfcand,
     variables_jet,
     variables_event,
@@ -18,10 +18,10 @@ class RDFanalysis:
         global jetClusteringHelper
         global jetFlavourHelper
 
-        from examples.FCCee.weaver.config import collections, njets
+        from config import collections, njets, ptcut, coneRadius
 
         ## define jet clustering parameters
-        jetClusteringHelper = InclusiveJetClusteringHelper(collections["PFParticles"], njets)
+        jetClusteringHelper = InclusiveJetClusteringHelper(collections["PFParticles"], coneRadius, ptcut)
 
         ## run jet clustering
         df = jetClusteringHelper.define(df)
